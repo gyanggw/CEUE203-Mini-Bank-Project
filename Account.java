@@ -1,4 +1,4 @@
-class Account
+public abstract class Account
 {
     private final String accountNumber;
     private String ownerName;
@@ -9,7 +9,8 @@ class Account
     private static String generateAccountNumber()
     {
         accountCounter++;
-        return String.format("AC%04d", accountCounter);
+        String newAccountNumber = String.format("AC%04d", accountCounter);
+        return newAccountNumber;
     }
 
     public Account(String ownerName, long balance)
@@ -24,6 +25,9 @@ class Account
     {
         this(nm, 0);
     }
+
+    public abstract double interestRate();
+    public abstract boolean canWithdraw(long amount);
 
     public boolean deposit(long amount)
     {
@@ -46,9 +50,11 @@ class Account
             System.out.println("Enter proper amount.");
             return false;
         }
-        if (amount > balance)
+        
+        boolean allowed = canWithdraw(amount);
+        if (!allowed)
         {
-            System.out.println("You do not have sufficient amount.");
+            System.out.println("Withdrawal Not allowed: Insufficient amount or locked account.");
             return false;
         }
         else
@@ -60,44 +66,123 @@ class Account
 
     public String getAccountNumber()
     {
-        return this.accountNumber;
+        String accNum = this.accountNumber;
+        return accNum;
     }
 
     public String getOwnerName()
     {
-        return this.ownerName;
+        String name = this.ownerName;
+        return name;
     }
 
     public long getBalance()
     {
-        return this.balance;
+        long bal = this.balance;
+        return bal;
     }
 
     public boolean getActivity()
     {
-        return this.active;
+        boolean isActive = this.active;
+        return isActive;
     }
 
     @Override
     public String toString()
     {
-        return accountNumber + ": owner=" + ownerName + ", balance=" + balance;
+        String accountDetails = accountNumber + ": owner=" + ownerName + ", balance=" + balance;
+        return accountDetails;
     }
 
     @Override
     public boolean equals(Object obj)
     {
         if (this == obj)
+        {
             return true;
-        if (!(obj instanceof Account))
+        }
+        
+        boolean isNotAccount = !(obj instanceof Account);
+        if (isNotAccount)
+        {
             return false;
+        }
+        
         Account account = (Account) obj;
-        return accountNumber != null && accountNumber.equals(account.accountNumber);
+        boolean isSameAccount = (accountNumber != null) && accountNumber.equals(account.accountNumber);
+        return isSameAccount;
     }
 
     @Override
     public int hashCode()
     {
-        return accountNumber == null ? 0 : accountNumber.hashCode();
+        if (accountNumber == null)
+        {
+            return 0;
+        }
+        
+        int hash = accountNumber.hashCode();
+        return hash;
+    }
+}
+class SavingsAccount extends Account {
+    private long minBalance;
+
+    public SavingsAccount(String ownerName, long balance, long minBalance) {
+        super(ownerName, balance); 
+        this.minBalance = minBalance;
+    }
+
+    @Override
+    public double interestRate() {
+        double rate = 4.0;
+        return rate;
+    }
+
+    @Override
+    public boolean canWithdraw(long amount) {
+        long remainingBalance = getBalance() - amount;
+        boolean isAllowed = remainingBalance >= minBalance;
+        return isAllowed;
+    }
+}
+class CurrentAccount extends Account {
+    private long overDraftLimit;
+
+    public CurrentAccount(String ownerName, long balance, long overDraftLimit) {
+        super(ownerName, balance); 
+        this.overDraftLimit = overDraftLimit;
+    }
+
+    @Override
+    public double interestRate() {
+        double rate = 0.0;
+        return rate;
+    }
+
+    @Override
+    public boolean canWithdraw(long amount) {
+        long remainingBalance = getBalance() - amount;
+        long limit = -overDraftLimit;
+        boolean isAllowed = remainingBalance >= limit;
+        return isAllowed;
+    }
+}
+class FixedDepositAccount extends Account {
+    
+    public FixedDepositAccount(String ownerName, long balance) {
+        super(ownerName, balance); 
+    }
+
+    @Override
+    public double interestRate() {
+        double rate = 7.0;
+        return rate;
+    }
+
+    @Override
+    public boolean canWithdraw(long amount) {
+        return false; 
     }
 }

@@ -1,10 +1,8 @@
-
 import java.util.Scanner;
 
 public class MiniBank {
 
     record BankInfo(String bankName, String branchName) {
-
     }
 
     enum Menu {
@@ -23,32 +21,27 @@ public class MiniBank {
     }
 
     record Command(TransactionType type, String accountNumber, long amount) {
-
     }
 
     public static void main(String[] args) {
         BankInfo myBank = new BankInfo("SBI", "Anand");
 
-        Account[] accounts = new Account[10];
-        accounts[0] = new Account("Alice", 1000);
-        accounts[1] = new Account("Bob", 500);
-        accounts[2] = new Account("Charlie");
-        int accountCount = 3;
+        System.out.println("Gyan Patel = 25DCS080 12:27 pm\n");
 
-        accounts[0].deposit(500);
-        accounts[1].withdraw(200);
-        accounts[2].deposit(1000);
-        accounts[2].withdraw(300);
+        Account[] accounts = new Account[3];
+        accounts[0] = new SavingsAccount("Gyan", 5000, 1000);
+        accounts[1] = new CurrentAccount("Pratham", 2000, 5000);
+        accounts[2] = new FixedDepositAccount("Om", 10000);
+        
+        int accountCount = 3; 
 
-        for (int i = 0; i < accountCount; i++) {
-            System.out.println(accounts[i]);
+        for (Account acc : accounts) {
+            System.out.println("Account: " + acc.getOwnerName() + "  Type: " + acc.getClass().getSimpleName() + "  Interest Rate: " + acc.interestRate() + "%");
+            
+            if (acc instanceof FixedDepositAccount fd) {
+                System.out.println("Fixed Deposits are locked. Withdraw attempt of 100 allowed? " + fd.canWithdraw(100));
+            }
         }
-
-        System.out.println("Account 0 equals Account 1: " + accounts[0].equals(accounts[1]));
-        Object firstAccount = accounts[0];
-        System.out.println("firstAccount is Account: " + (firstAccount instanceof Account));
-
-        System.out.println("Gyan Patel = 25DCS080 4:26pm\n");
 
         System.out.println("\n--- Mobile Validator ---");
         String validMobile = "9876543210";
@@ -74,16 +67,16 @@ public class MiniBank {
         System.out.println("Valid IFSC (SBIN0001234): " + Validator.isValidIfsc(validIfsc));
         System.out.println("Invalid IFSC (SBI01234567): " + Validator.isValidIfsc(invalidIfsc));
 
-            System.out.println("\nGyan Patel = 25DCS080 4:26pm\n");
+        System.out.println("\nGyan Patel = 25DCS080 4:26pm\n");
 
         System.out.println("\n\t\t TESTING COMMAND PARSER \n");
         
-            String commandLine = "DEPOSIT AC0001 500";
-            Command cmd = CommandParser.parse(commandLine);
-            System.out.println("\nParsed Command: " + commandLine);
-            System.out.println("  Type: " + cmd.type());
-            System.out.println("  Account Number: " + cmd.accountNumber());
-            System.out.println("  Amount: " + cmd.amount());
+        String commandLine = "DEPOSIT AC0001 500";
+        Command cmd = CommandParser.parse(commandLine);
+        System.out.println("\nParsed Command: " + commandLine);
+        System.out.println("  Type: " + cmd.type());
+        System.out.println("  Account Number: " + cmd.accountNumber());
+        System.out.println("  Amount: " + cmd.amount());
 
         System.out.println("\n\t\t TESTING STATEMENT FORMATTER \n");
         System.out.println(ValidStatement.buildStatement(accounts[0]));
@@ -111,7 +104,8 @@ public class MiniBank {
                     long initialBalance = input.nextLong();
                     input.nextLine();
 
-                    Account newAccount = new Account(holderName, initialBalance);
+                    // FIX: Cannot instantiate abstract Account. Using SavingsAccount with a default 500 min balance.
+                    Account newAccount = new SavingsAccount(holderName, initialBalance, 500);
 
                     if (accountCount == accounts.length) {
                         Account[] newArray = new Account[accounts.length * 2];
