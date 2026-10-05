@@ -1,10 +1,15 @@
 package model;
 
+import model.annotation.Id;
+import model.annotation.Positive;
+
 public abstract class Account implements Transactable, InterestBearing {
     private static long accountCounter = 0;
 
+    @Id
     private final String accountNumber;
     private String ownerName;
+    @Positive
     private long balance;
     private boolean active;
 

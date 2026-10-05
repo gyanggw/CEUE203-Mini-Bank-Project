@@ -15,6 +15,7 @@ import model.Premium;
 import model.SavingsAccount;
 import model.Transactable;
 import model.WithdrawRule;
+import model.annotation.AnnotationValidator;
 import util.CommandParser;
 import util.ValidStatement;
 
@@ -88,6 +89,12 @@ public class MiniBank {
 
         Command cmd = CommandParser.parse("DEPOSIT AC0001 500");
         System.out.println("Parsed command: " + cmd.type() + " " + cmd.accountNumber() + " " + cmd.amount());
+
+        System.out.println("\nAnnotation validation sample:");
+        Account invalidAccount = new SavingsAccount("Test", -500, 0);
+        for (String error : AnnotationValidator.validate(invalidAccount)) {
+            System.out.println("- " + error);
+        }
 
         Scanner scanner = new Scanner(System.in);
         int choice = 0;

@@ -35,6 +35,7 @@ class Customer implements Cloneable
             return pincode;
         }
 
+        @Override
         public Address clone()
         {
             return new Address(line, city, pincode);
