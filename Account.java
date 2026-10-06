@@ -1,3 +1,8 @@
+import exception.AccountNotFoundException;
+import exception.BankException;
+import exception.InsufficientFundsException;
+import exception.InvalidAmountException;
+
 public abstract class Account
 {
     private final String accountNumber;
@@ -29,38 +34,49 @@ public abstract class Account
     public abstract double interestRate();
     public abstract boolean canWithdraw(long amount);
 
-    public boolean deposit(long amount)
+    public boolean deposit(long amount) throws InvalidAmountException
     {
-        if (amount > 0)
-        {
-            this.balance += amount;
-            return true;
+        if (amount <= 0) {
+            throw new InvalidAmountException("Deposit amount must be greater than zero.");
         }
-        else
-        {
-            System.out.println("Enter proper amount.");
-            return false;
-        }
+
+        this.balance += amount;
+        return true;
     }
 
     public boolean withdraw(long amount)
+            throws InsufficientFundsException, InvalidAmountException
     {
-        if (amount < 0)
-        {
-            System.out.println("Enter proper amount.");
-            return false;
+        if (amount <= 0) {
+            throw new InvalidAmountException("Withdrawal amount must be greater than zero.");
         }
         
         boolean allowed = canWithdraw(amount);
-        if (!allowed)
-        {
-            System.out.println("Withdrawal Not allowed: Insufficient amount or locked account.");
-            return false;
+        if (!allowed) {
+            long shortfall = amount > balance ? amount - balance : amount;
+            throw new InsufficientFundsException(
+                    "Withdrawal is not allowed for this account.", shortfall);
         }
-        else
-        {
-            this.balance -= amount;
-            return true;
+
+        this.balance -= amount;
+        return true;
+    }
+
+    public void transfer(Account to, long amount) throws BankException {
+        try {
+            if (to == null) {
+                throw new AccountNotFoundException("Destination account was not found.");
+            }
+            if (this == to) {
+                throw new BankException("Sender and receiver cannot be the same account.");
+            }
+
+            withdraw(amount);
+            to.deposit(amount);
+        } catch (BankException exception) {
+            throw exception;
+        } finally {
+            System.out.println("Transfer attempt finished.");
         }
     }
 

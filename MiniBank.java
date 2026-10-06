@@ -1,5 +1,10 @@
 import java.util.Scanner;
 
+import exception.AccountNotFoundException;
+import exception.BankException;
+import exception.InsufficientFundsException;
+import exception.InvalidAmountException;
+
 public class MiniBank {
 
     record BankInfo(String bankName, String branchName) {
@@ -25,6 +30,12 @@ public class MiniBank {
 
     public static void main(String[] args) {
         BankInfo myBank = new BankInfo("SBI", "Anand");
+
+        try (BankCounter counter = new BankCounter()) {
+            counter.showMessage();
+        } finally {
+            System.out.println("Bank counter example finished.\n");
+        }
 
         System.out.println("Gyan Patel = 25DCS080 12:27 pm\n");
 
@@ -121,87 +132,72 @@ public class MiniBank {
                     break;
                 }
                 case 2: {
-                    System.out.print("Enter account number : ");
-                    String accountNumber = input.nextLine();
-                    Account account = null;
-                    for (Account a : accounts) {
-                        if (a != null && a.getAccountNumber().equals(accountNumber)) {
-                            account = a;
-                            break;
-                        }
-                    }
-                    if (account != null) {
+                    try {
+                        System.out.print("Enter account number : ");
+                        String accountNumber = input.nextLine();
+                        Account account = findAccount(accounts, accountNumber);
                         System.out.print("How much amount you want to deposit : ");
                         long amount = input.nextLong();
                         input.nextLine();
-                        if (account.deposit(amount)) {
-                            System.out.println("Deposit successful. New balance: " + account.getBalance());
-                        }
-                    } else {
-                        System.out.println("Account not found.");
+                        account.deposit(amount);
+                        System.out.println("Deposit successful. New balance: " + account.getBalance());
+                    } catch (AccountNotFoundException e) {
+                        System.out.println("Sorry, that account could not be found.");
+                    } catch (InvalidAmountException e) {
+                        System.out.println("Deposit failed: " + e.getMessage());
+                    } finally {
+                        System.out.println("Deposit attempt finished.");
                     }
                     break;
                 }
                 case 3: {
-                    System.out.print("Enter account number : ");
-                    String accountNumber = input.nextLine();
-                    Account account = null;
-                    for (Account a : accounts) {
-                        if (a != null && a.getAccountNumber().equals(accountNumber)) {
-                            account = a;
-                            break;
-                        }
-                    }
-                    if (account != null) {
+                    try {
+                        System.out.print("Enter account number : ");
+                        String accountNumber = input.nextLine();
+                        Account account = findAccount(accounts, accountNumber);
                         System.out.print("How much amount you want to withdraw : ");
                         long amount = input.nextLong();
                         input.nextLine();
                         if (account.withdraw(amount)) {
                             System.out.println("Withdrawal successful. New balance: " + account.getBalance());
                         }
-                    } else {
-                        System.out.println("Account not found.");
+                    } catch (InsufficientFundsException e) {
+                        System.out.println("Withdrawal failed: " + e.getMessage()
+                                + " Shortfall: " + e.shortfall);
+                    } catch (InvalidAmountException e) {
+                        System.out.println("Withdrawal failed: " + e.getMessage());
+                    } catch (AccountNotFoundException e) {
+                        System.out.println("Sorry, that account could not be found.");
+                    } finally {
+                        System.out.println("Withdrawal attempt finished.");
                     }
                     break;
                 }
                 case 4: {
-                    System.out.print("Enter sender account number : ");
-                    String senderAccountNumber = input.nextLine();
-                    Account sender = null;
-                    for (Account a : accounts) {
-                        if (a != null && a.getAccountNumber().equals(senderAccountNumber)) {
-                            sender = a;
-                            break;
-                        }
-                    }
-                    if (sender != null) {
+                    try {
+                        System.out.print("Enter sender account number : ");
+                        String senderAccountNumber = input.nextLine();
+                        Account sender = findAccount(accounts, senderAccountNumber);
                         System.out.print("Enter receiver account number : ");
                         String receiverAccountNumber = input.nextLine();
-                        Account receiver = null;
-                        for (Account a : accounts) {
-                            if (a != null && a.getAccountNumber().equals(receiverAccountNumber)) {
-                                receiver = a;
-                                break;
-                            }
-                        }
-                        if (receiver != null) {
-                            if (sender == receiver) {
-                                System.out.println("Sender and receiver cannot be the same account.");
-                            } else {
-                                System.out.print("How much amount you want to transfer : ");
-                                long amount = input.nextLong();
-                                input.nextLine();
-                                if (amount > 0 && sender.withdraw(amount)) {
-                                    receiver.deposit(amount);
-                                    System.out.println("Transfer successful. Sender balance: " + sender.getBalance()
-                                            + ", Receiver balance: " + receiver.getBalance());
-                                }
-                            }
-                        } else {
-                            System.out.println("Account not found.");
-                        }
-                    } else {
-                        System.out.println("Account not found.");
+                        Account receiver = findAccount(accounts, receiverAccountNumber);
+                        System.out.print("How much amount you want to transfer : ");
+                        long amount = input.nextLong();
+                        input.nextLine();
+                        sender.transfer(receiver, amount);
+                        System.out.println("Transfer successful. Sender balance: " + sender.getBalance()
+                                + ", Receiver balance: " + receiver.getBalance());
+                    } catch (InsufficientFundsException e) {
+                        System.out.println("Transfer failed: " + e.getMessage()
+                                + " Shortfall: " + e.shortfall);
+                    } catch (InvalidAmountException e) {
+                        System.out.println("Transfer failed: " + e.getMessage());
+                    } catch (AccountNotFoundException e) {
+                        System.out.println("Transfer failed: " + e.getMessage());
+                    } catch (BankException e) {
+                        System.out.println("Transfer failed: " + e.getMessage());
+                    } finally {
+                        System.out.println("Transfer menu operation finished.");
                     }
                     break;
                 }
@@ -232,5 +228,26 @@ public class MiniBank {
         } while (choice != 6);
 
         input.close();
+    }
+
+    private static Account findAccount(Account[] accounts, String accountNumber)
+            throws AccountNotFoundException {
+        for (Account account : accounts) {
+            if (account != null && account.getAccountNumber().equals(accountNumber)) {
+                return account;
+            }
+        }
+        throw new AccountNotFoundException("Account " + accountNumber + " was not found.");
+    }
+}
+
+class BankCounter implements AutoCloseable {
+    void showMessage() {
+        System.out.println("Welcome to the Mini Bank counter.");
+    }
+
+    @Override
+    public void close() {
+        System.out.println("Bank counter closed.");
     }
 }
