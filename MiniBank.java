@@ -28,7 +28,7 @@ public class MiniBank {
     record Command(TransactionType type, String accountNumber, long amount) {
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         BankInfo myBank = new BankInfo("SBI", "Anand");
 
         try (BankCounter counter = new BankCounter()) {
@@ -38,6 +38,26 @@ public class MiniBank {
         }
 
         System.out.println("Gyan Patel = 25DCS080 12:27 pm\n");
+
+        System.out.println("--- Multiple Threads Depositing ---");
+        Account threadAccount = new SavingsAccount("Thread Test", 0, 0);
+        int threadCount = 10;
+        int depositTimes = 10000;
+        long depositAmount = 1;
+        Thread[] threads = new Thread[threadCount];
+
+        for (int i = 0; i < threadCount; i++) {
+            threads[i] = new Thread(new AccountWorker(threadAccount, depositTimes, depositAmount));
+            threads[i].start();
+        }
+
+        for (Thread thread : threads) {
+            thread.join();
+        }
+
+        long expectedBalance = threadCount * depositTimes * depositAmount;
+        System.out.println("Expected balance: " + expectedBalance);
+        System.out.println("Actual balance:   " + threadAccount.getBalance());
 
         Account[] accounts = new Account[3];
         accounts[0] = new SavingsAccount("Gyan", 5000, 1000);

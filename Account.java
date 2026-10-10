@@ -34,7 +34,7 @@ public abstract class Account
     public abstract double interestRate();
     public abstract boolean canWithdraw(long amount);
 
-    public boolean deposit(long amount) throws InvalidAmountException
+    public synchronized boolean deposit(long amount) throws InvalidAmountException
     {
         if (amount <= 0) {
             throw new InvalidAmountException("Deposit amount must be greater than zero.");
@@ -44,7 +44,7 @@ public abstract class Account
         return true;
     }
 
-    public boolean withdraw(long amount)
+    public synchronized boolean withdraw(long amount)
             throws InsufficientFundsException, InvalidAmountException
     {
         if (amount <= 0) {
@@ -92,7 +92,7 @@ public abstract class Account
         return name;
     }
 
-    public long getBalance()
+    public synchronized long getBalance()
     {
         long bal = this.balance;
         return bal;
