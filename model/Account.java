@@ -32,7 +32,7 @@ public abstract class Account implements Transactable, InterestBearing {
     public abstract double interestRate();
     public abstract boolean canWithdraw(long amount);
 
-    public void deposit(long amount) {
+    public synchronized void deposit(long amount) {
         if (amount > 0) {
             balance = balance + amount;
             System.out.println("Deposit successful.");
@@ -41,7 +41,7 @@ public abstract class Account implements Transactable, InterestBearing {
         }
     }
 
-    public boolean withdraw(long amount) {
+    public synchronized boolean withdraw(long amount) {
         if (amount <= 0) {
             System.out.println("Enter a valid amount.");
             return false;
@@ -65,8 +65,32 @@ public abstract class Account implements Transactable, InterestBearing {
         return ownerName;
     }
 
-    public long getBalance() {
+    public synchronized long getBalance() {
         return balance;
+    }
+
+    public boolean transferTo(Account destination, long amount) {
+        if (destination == null || destination == this || amount <= 0) {
+            return false;
+        }
+
+        Account first = this;
+        Account second = destination;
+        // Lock in the same order for every transfer to prevent deadlock.
+        if (accountNumber.compareTo(destination.accountNumber) > 0) {
+            first = destination;
+            second = this;
+        }
+
+        synchronized (first) {
+            synchronized (second) {
+                if (!withdraw(amount)) {
+                    return false;
+                }
+                destination.deposit(amount);
+                return true;
+            }
+        }
     }
 
     public boolean isActive() {
@@ -79,6 +103,6 @@ public abstract class Account implements Transactable, InterestBearing {
 
     @Override
     public String toString() {
-        return "Account Number: " + accountNumber + ", Owner: " + ownerName + ", Balance: " + balance;
+        return "Account Number: " + accountNumber + ", Owner: " + ownerName + ", Balance: " + getBalance();
     }
 }
